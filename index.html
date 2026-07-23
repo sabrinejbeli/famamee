@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Fama Mee — L'eau, zone par zone</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --blue-deep:#123C5C;
+    --blue-mid:#1F5C86;
+    --blue-sky:#5C93B8;
+    --sand:#F3ECDA;
+    --sand-2:#EAE0C6;
+    --ink:#12222E;
+    --green:#1E9E5C;
+    --green-dark:#166F41;
+    --red:#D3453A;
+    --red-dark:#A6362D;
+    --gold:#C99A2E;
+    --white:#FFFFFF;
+    --radius:14px;
+    --shadow:0 8px 24px rgba(18,34,46,0.14);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--sand);
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    min-height:100dvh;
+    overflow-x:hidden;
+    -webkit-text-size-adjust:100%;
+  }
+
+  #top-bar{position:sticky;top:0;z-index:2000;}
+  header{
+    background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%,var(--blue-sky) 100%);
+    position:relative;
+    padding:22px 24px 30px;
+    padding-top:max(22px, env(safe-area-inset-top));
+    padding-left:max(24px, env(safe-area-inset-left));
+    padding-right:max(24px, env(safe-area-inset-right));
+    color:var(--white);
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    left:0;right:0;bottom:-1px;
+    height:26px;
+    background:radial-gradient(circle at 10px 0, transparent 12px, var(--sand) 13px) repeat-x;
+    background-size:26px 26px;
+  }
+  .brand-row{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;flex-wrap:wrap;position:relative;z-index:2;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:50px;height:50px;border-radius:50%;
+    background:var(--gold);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 -4px 0 rgba(0,0,0,0.15);flex-shrink:0;
+  }
+  .brand-mark svg{width:28px;height:28px;display:block;}
+  .slogan-badge{
+    display:inline-flex;align-items:center;gap:6px;margin-top:6px;
+    background:rgba(201,154,46,0.18);border:1px solid rgba(201,154,46,0.5);
+    color:var(--gold);font-family:'Cairo',sans-serif;font-weight:700;font-size:13px;
+    padding:3px 12px;border-radius:999px;letter-spacing:0.3px;
+  }
+  h1{font-family:'Cairo',sans-serif;font-weight:900;font-size:clamp(24px,4vw,32px);margin:0;letter-spacing:0.5px;}
+  h1 span{color:var(--gold);}
+  .tagline{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.8);margin-top:2px;}
+
+  .search-wrap{
+    display:flex;flex-wrap:nowrap;gap:8px;
+    background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);
+    border-radius:999px;padding:6px 6px 6px 18px;align-items:center;
+    min-width:0;width:100%;flex:1 1 280px;max-width:460px;
+    position:relative;z-index:2;box-sizing:border-box;
+  }
+  .search-wrap input{
+    flex:1;min-width:0;background:transparent;border:none;outline:none;
+    color:var(--white);font-family:'Inter',sans-serif;font-size:16px;
+    padding:10px 0;-webkit-appearance:none;appearance:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .search-wrap input::placeholder{color:rgba(255,255,255,0.65);}
+  .search-wrap button{
+    background:var(--gold);border:none;color:var(--blue-deep);
+    font-weight:700;font-family:'Cairo',sans-serif;font-size:14px;
+    padding:11px 18px;min-height:40px;border-radius:999px;cursor:pointer;
+    transition:transform .15s ease,filter .15s ease;white-space:nowrap;
+    flex-shrink:0;touch-action:manipulation;
+  }
+  .search-wrap button:hover{filter:brightness(1.08);}
+  .search-wrap button:active{transform:scale(0.96);}
+
+  .hint{margin-top:14px;font-size:13px;color:rgba(255,255,255,0.85);position:relative;z-index:2;}
+  .hint strong{color:var(--gold);}
+
+  main{flex:1;display:flex;flex-direction:column;position:relative;}
+  #map{flex:1;min-height:420px;width:100%;}
+  .leaflet-popup-content-wrapper{border-radius:10px;font-family:'Inter',sans-serif;}
+
+  /* Zone panel */
+  #zone-panel{
+    position:absolute;left:50%;bottom:18px;transform:translate(-50%,140%);
+    background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:16px 20px;width:min(92%,480px);
+    transition:transform .35s cubic-bezier(.2,.9,.25,1);z-index:1000;
+  }
+  #zone-panel.visible{transform:translate(-50%,0);}
+
+  .zone-name-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+  .zone-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--blue-mid);font-weight:700;}
+  #zone-name{font-family:'Cairo',sans-serif;font-weight:800;font-size:19px;color:var(--ink);margin:2px 0 12px;line-height:1.25;}
+
+  .status-btns{display:flex;gap:10px;}
+  .status-btn{
+    flex:1;border:none;border-radius:10px;padding:12px 10px;
+    font-family:'Cairo',sans-serif;font-weight:800;font-size:15px;
+    cursor:pointer;color:var(--white);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:transform .12s ease,filter .12s ease,box-shadow .12s ease;
+    box-shadow:0 4px 0 rgba(0,0,0,0.15);
+  }
+  .status-btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,0.15);}
+  .status-btn.famma{background:var(--green);}
+  .status-btn.famma:hover:not(:disabled){filter:brightness(1.06);}
+  .status-btn.mafamech{background:var(--red);}
+  .status-btn.mafamech:hover:not(:disabled){filter:brightness(1.06);}
+  .status-btn.selected.famma{background:var(--green-dark);outline:3px solid rgba(30,158,92,0.3);}
+  .status-btn.selected.mafamech{background:var(--red-dark);outline:3px solid rgba(211,69,58,0.3);}
+  .status-btn:disabled{opacity:0.55;cursor:not-allowed;transform:none !important;}
+
+  #confirm-msg{
+    margin-top:10px;font-size:12.5px;color:#5a6b74;
+    min-height:16px;text-align:center;
+  }
+  #confirm-msg.success{color:var(--green-dark);font-weight:600;}
+  #confirm-msg.error{color:var(--red-dark);font-weight:600;}
+  #confirm-msg.warning{color:var(--gold);font-weight:600;}
+
+  /* Stats strip */
+  #stats{
+    display:flex;justify-content:center;gap:26px;
+    background:var(--white);padding:10px 16px;
+    font-family:'Inter',sans-serif;font-size:13px;
+    border-bottom:1px solid var(--sand-2);flex-wrap:wrap;
+  }
+  .stat{display:flex;align-items:center;gap:6px;font-weight:700;color:#3d4b53;}
+  .stat span:not(.dot){font-family:'Cairo',sans-serif;font-weight:800;color:var(--ink);}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  .dot.green{background:var(--green);}
+  .dot.red{background:var(--red);}
+
+  #zone-votes{
+    display:flex;gap:14px;margin:-6px 0 12px;
+    font-size:12.5px;font-weight:600;color:#5a6b74;
+  }
+  #zone-votes .v-famma{color:var(--green-dark);}
+  #zone-votes .v-mafamech{color:var(--red-dark);}
+
+  /* Panneau statistiques détaillé */
+  #stats-panel{
+    background:var(--white);padding:14px 20px;
+    border-bottom:1px solid var(--sand-2);
+    display:none;
+  }
+  #stats-panel.open{display:block;}
+  .stats-title{
+    font-family:'Cairo',sans-serif;font-weight:800;font-size:16px;
+    color:var(--blue-deep);margin-bottom:12px;
+  }
+  .top-zones-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:8px;max-height:280px;overflow-y:auto;
+  }
+  .zone-card{
+    background:var(--sand);border-radius:8px;padding:10px 12px;
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .zone-card-name{font-weight:700;font-size:13px;color:var(--ink);}
+  .zone-bar{display:flex;height:6px;border-radius:3�x;overflow:hidden;gap:1px;margin:2px 0;}
+  .zone-bar .b-f{background:var(--green);}
+  .zone-bar .b-m{background:var(--red);}
+  .zone-card-counts{font-size:11px;color:#5a6b74;}
+  .zone-card-counts .cf{color:var(--green-dark);}
+  .zone-card-counts .cm{color:var(--red-dark);}
+
+  #toggle-stats{
+    background:none;border:1px solid var(--sand-2);
+    border-radius:999px;padding:4px 14px;
+    font-family:'Cairo',sans-serif;font-weight:700;font-size:12px;
+    color:var(--blue-mid);cursor:pointer;white-space:nowrap;
+    transition:background .12s ease;
+  }
+  #toggle-stats:hover{background:var(--sand);}
+
+  /* Marker custom */
+  .fm-marker{
+    width:22px;height:22px;border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 6px rgba(0,0,0,0.3);border:2px solid var(--white);
+  }
+  .fm-marker.pending{background:var(--gold);}
+  .fm-marker.famma{background:var(--green);}
+  .fm-marker.mafamech{background:var(--red);}
+  .fm-marker span{transform:rotate(45deg);font-size:11px;}
+  @keyframes ripple{0%{box-shadow:0 0 0 0 rgba(255,255,255,0.6);}100%{box-shadow:0 0 0 16px rgba(255,255,255,0);}}
+  .fm-marker.ripple{animation:ripple 0.7s ease-out;}
+
+  footer{
+    text-align:center;font-size:11.5px;color:#7c8a91;
+    padding:8px 10px 10px;background:var(--white);
+  }
+
+  @media(max-width:520px){
+    .brand-row{flex-direction:column;align-items:stretch;justify-content:flex-start;text-align:center;}
+    .brand{justify-content:center;}
+    .search-wrap{flex-basis:auto;width:100%;max-width:none;margin-top:4px;padding:5px 5px 5px 16px;}
+    .search-wrap input{padding:11px 0;}
+    .search-wrap button{padding:11px 16px;font-size:13.5px;}
+    #zone-panel{width:94%;left:50%;}
+    .top-zones-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media(max-width:380px){
+    h1{font-size:22px;}.tagline{font-size:12px;}.slogan-badge{font-size:12px;padding:3px 10px;}
+    .top-zones-grid{grid-template-columns:1fr;}
+  }
+  @media(prefers-reduced-motion:reduce){
+    #zone-panel,.status-btn,.fm-marker.ripple{transition:none;animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div id="top-bar">
+<header>
+  <div class="brand-row">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 2 C16 2 6 15 6 21.5 C6 27.3 10.5 30 16 30 C21.5 30 26 27.3 26 21.5 C26 15 16 2 16 2 Z" fill="#123C5C"/>
+          <path d="M16 6.5 C16 6.5 9.5 16 9.5 21 C9.5 25 12 27.2 16 27.2"
+                fill="none" stroke="#5C93B8" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Fama<span> Mee</span></h1>
+        <div class="tagline">Y a-t-il de l'eau dans ta zone aujourd'hui ?</div>
+        <div class="slogan-badge">نحبو الماء — Nhebou el Mee</div>
+      </div>
+    </div>
+    <div class="search-wrap" id="search-form" role="search">
+      <input type="text" id="search-input" placeholder="Chercher une ville, un quartier..." autocomplete="off" enterkeyhint="search" />
+      <button type="button" id="search-btn">🔍 Chercher</button>
+    </div>
+  </div>
+  <div class="hint">Clique sur ta zone sur la carte, puis signale : <strong>Famma</strong> (il y a de l'eau) ou <strong>Mafamech</strong> (pas d'eau). <em>Un seul vote par zone.</em></div>
+</header>
+
+<div id="stats">
+  <div class="stat"><span class="dot green"></span><span id="count-famma">…</span> ont dit Famma</div>
+  <div class="stat"><span class="dot red"></span><span id="count-mafamech">…</span> ont dit Mafamech</div>
+  <div class="stat" id="stat-zones" style="color:#7c8a91;font-size:12px;"></div>
+  <button id="toggle-stats" type="button">📊 Voir par zone</button>
+</div>
+</div>
+
+<!-- Panneau top zones -->
+<div id="stats-panel">
+  <div class="stats-title">📊 Signalements par zone</div>
+  <div class="top-zones-grid" id="top-zones-grid">
+    <div style="color:#7c8a91;font-size:13px;">Chargement des données…</div>
+  </div>
+</div>
+
+<main>
+  <div id="map"></div>
+
+  <div id="zone-panel">
+    <div class="zone-name-row">
+      <span class="zone-label">Zone sélectionnée</span>
+    </div>
+    <div id="zone-name">—</div>
+    <div id="zone-votes"></div>
+    <div class="status-btns">
+      <button class="status-btn famma" id="btn-famma" type="button">💧 Famma</button>
+      <button class="status-btn mafamech" id="btn-mafamech" type="button">🚱 Mafamech</button>
+    </div>
+    <div id="confirm-msg"></div>
+  </div>
+</main>
+
+<footer>Signalements partagés et enregistrés pour tous les visiteurs du site — données communautaires non officielles.</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+  // =============================================
+  // Configuration
+  // =============================================
+  // En production, remplacez par l'URL de votre hébergeur PHP
+  // ex: const API_BASE = 'https://votre-site.infinityfreeapp.com/api';
+  const API_BASE = './api';
+
+  // =============================================
+  // Initialisation carte
+  // =============================================
+  const map = L.map('map', { zoomControl: true }).setView([34.0, 9.5], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  const panel       = document.getElementById('zone-panel');
+  const zoneNameEl  = document.getElementById('zone-name');
+  const btnFamma    = document.getElementById('btn-famma');
+  const btnMafamech = document.getElementById('btn-mafamech');
+  const confirmMsg  = document.getElementById('confirm-msg');
+  const zoneVotesEl = document.getElementById('zone-votes');
+  const countFammaEl    = document.getElementById('count-famma');
+  const countMafamechEl = document.getElementById('count-mafamech');
+  const statZonesEl     = document.getElementById('stat-zones');
+  const topZonesGrid    = document.getElementById('top-zones-grid');
+
+  let currentMarker   = null;
+  let currentZone     = null;
+  let globalCounts    = { famma: 0, mafamech: 0 };
+  let zoneVotesCache  = {};
+  let topZonesCache   = [];
+
+  function getVotedZones() {
+    try { return JSON.parse(localStorage.getItem('fm-voted-zones') || '{}'); }
+    catch(e) { return {}; }
+  }
+  function saveVotedZone(name, status) {
+    try {
+      const v = getVotedZones();
+      v[name] = status;
+      localStorage.setItem('fm-voted-zones', JSON.stringify(v));
+    } catch(e) {}
+  }
+  function hasVotedFor(name) {
+    return getVotedZones()[name] || null;
+  }
+
+  async function fetchStats() {
+    try {
+      const res  = await fetch(`${API_BASE}/stats.php?top=50&_=${Date.now()}`);
+      const data = await res.json();
+      if (data.global) {
+        globalCounts  = data.global;
+        zoneVotesCache = data.zone_votes || {};
+        topZonesCache  = data.top_zones  || [];
+        renderGlobalCounts();
+        renderTopZones();
+      }
+    } catch(e) {
+      countFammaEl.textContent = '—';
+      countMafamechEl.textContent = '—';
+    }
+  }
+
+  async function submitVote(zone_name, vote_type, lat, lng) {
+    btnFamma.disabled = true;
+    btnMafamech.disabled = true;
+    confirmMsg.className = '';
+    confirmMsg.textContent = 'Envoi en cours…';
+    try {
+      const res  = await fetch(`${API_BASE}/vote.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone_name, vote_type, latitude: lat, longitude: lng })
+      });
+      const data = await res.json();
+      if (data.already_voted) {
+        confirmMsg.className = 'warning';
+        confirmMsg.textContent = data.message || 'Vous avez déjà voté pour cette zone.';
+        saveVotedZone(zone_name, data.previous_vote || vote_type);
+        applyVotedState(zone_name, data.previous_vote || vote_type);
+        return;
+      }
+      if (data.success) {
+        saveVotedZone(zone_name, vote_type);
+        globalCounts  = data.global_counts || globalCounts;
+        if (data.zone_counts) zoneVotesCache[zone_name] = data.zone_counts;
+        renderGlobalCounts();
+        renderZoneVotes(zone_name);
+        applyVotedState(zone_name, vote_type);
+        confirmMsg.className = 'success';
+        confirmMsg.textContent = data.message;
+        await fetchStats();
+      } else { throw new Error(data.error || 'Erreur inconnue'); }
+    } catch(e) {
+      saveVotedZone(zone_name, vote_type);
+      applyVotedState(zone_name, vote_type);
+      confirmMsg.className = 'warning';
+      confirmMsg.textContent = 'Vote enregistré localement (API indisponible).';
+    }
+  }
+
+  function renderGlobalCounts() {
+    countFammaEl.textContent    = globalCounts.famma    || 0;
+    countMafamechEl.textContent = globalCounts.mafamech || 0;
+    const z = globalCounts.zones;
+    statZonesEl.textContent = z ? `${z} zone${z>1?'s':''} signalée${z>1?'s':''}` : '';
+  }
+
+  function renderZoneVotes(name) {
+    const v = zoneVotesCache[name] || { famma: 0, mafamech: 0 };
+    if (v.famma === 0 && v.mafamech === 0) { zoneVotesEl.textContent = ''; return; }
+    zoneVotesEl.innerHTML =
+      `<span class="v-famma">💧 ${v.famma} Famma</span>` +
+      `<span class="v-mafamech">🚱 ${v.mafamech} Mafamech</span>`;
+  }
+
+  function renderTopZones() {
+    if (!topZonesCache.length) {
+      topZonesGrid.innerHTML = '<div style="color:#7c8a91;font-size:13px;">Aucun signalement pour le moment.</div>';
+      return;
+    }
+    topZonesGrid.innerHTML = topZonesCache.map(z => {
+      const total = z.total || 1;
+      const pf = Math.round((z.famma / total) * 100);
+      const pm = 100 - pf;
+      return `<div class="zone-card">
+        <div class="zone-card-name">${escapeHtml(z.name)}</div>
+        <div class="zone-bar"><div class="b-f" style="width:${pf}%"></div><div class="b-m" style="width:${pm}%"></div></div>
+        <div class="zone-card-counts"><span class="cf">💧 ${z.famma}</span>&nbsp;<span class="cm">🚱 ${z.mafamech}</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function applyVotedState(name, status) {
+    btnFamma.classList.toggle('selected', status === 'famma');
+    btnMafamech.classList.toggle('selected', status === 'mafamech');
+    btnFamma.disabled = true; btnMafamech.disabled = true;
+    if (currentMarker) currentMarker.setIcon(makeIcon(status));
+  }
+
+  function makeIcon(state) {
+    const emoji = state === 'pending' ? '?' : (state === 'famma' ? '💧' : '🚱');
+    return L.divIcon({ className: '', html: `<div class="fm-marker ${state} ripple"><span>${emoji}</span></div>`, iconSize: [26,26], iconAnchor: [13,26] });
+  }
+
+  async function reverseGeocode(lat, lng) {
+    try {
+      const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`);
+      const data = await res.json();
+      if (data && data.address) {
+        const a = data.address;
+        return a.suburb || a.neighbourhood || a.town || a.village || a.city_district || a.city || a.county || data.display_name.split(',')[0];
+      }
+    } catch(e) {}
+    return `Zone (${lat.toFixed(3)}, ${lng.toFixed(3)})`;
+  }
+
+  function openPanelForZone(name, lat, lng) {
+    currentZone = { name, lat, lng };
+    zoneNameEl.textContent = name;
+    confirmMsg.className = ''; confirmMsg.textContent = '';
+    renderZoneVotes(name);
+    const prev = hasVotedFor(name);
+    if (prev) {
+      applyVotedState(name, prev);
+      confirmMsg.className = 'warning';
+      confirmMsg.textContent = `Vous avez déjà voté "${prev === 'famma' ? 'Famma 💧' : 'Mafamech 🚱'}" pour cette zone.`;
+    } else {
+      btnFamma.classList.remove('selected'); btnMafamech.classList.remove('selected');
+      btnFamma.disabled = false; btnMafamech.disabled = false;
+    }
+    panel.classList.add('visible');
+  }
+
+  map.on('click', async function(e) {
+    const { lat, lng } = e.latlng;
+    if (currentMarker) map.removeLayer(currentMarker);
+    currentMarker = L.marker([lat, lng], { icon: makeIcon('pending') }).addTo(map);
+    zoneNameEl.textContent = 'Recherche du nom de la zone…';
+    confirmMsg.className = ''; confirmMsg.textContent = '';
+    btnFamma.classList.remove('selected'); btnMafamech.classList.remove('selected');
+    btnFamma.disabled = false; btnMafamech.disabled = false;
+    zoneVotesEl.textContent = ''; panel.classList.add('visible');
+    const name = await reverseGeocode(lat, lng);
+    openPanelForZone(name, lat, lng);
+  });
+
+  btnFamma.addEventListener('click', async () => {
+    if (!currentZone || btnFamma.disabled) return;
+    await submitVote(currentZone.name, 'famma', currentZone.lat, currentZone.lng);
+  });
+  btnMafamech.addEventListener('click', async () => {
+    if (!currentZone || btnMafamech.disabled) return;
+    await submitVote(currentZone.name, 'mafamech', currentZone.lat, currentZone.lng);
+  });
+
+  const searchBtn = document.getElementById('search-btn');
+  const input     = document.getElementById('search-input');
+  async function runSearch() {
+    const q = input.value.trim();
+    if (!q) return;
+    try {
+      const res  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=tn&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const place = data[0];
+        const lat = parseFloat(place.lat);
+        const lng = parseFloat(place.lon);
+        map.setView([lat, lng], 13);
+        if (currentMarker) map.removeLayer(currentMarker);
+        currentMarker = L.marker([lat, lng], { icon: makeIcon('pending') }).addTo(map);
+        openPanelForZone(place.display_name.split(',')[0], lat, lng);
+      } else {
+        zoneNameEl.textContent = 'Zone introuvable';
+        confirmMsg.textContent = ''; panel.classList.add('visible');
+      }
+    } catch(err) {
+      zoneNameEl.textContent = 'Erreur de recherche.'; panel.classList.add('visible');
+    }
+  }
+  searchBtn.addEventListener('click', runSearch);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); runSearch(); }
+  });
+
+  const toggleStatsBtn = document.getElementById('toggle-stats');
+  const statsPanel     = document.getElementById('stats-panel');
+  toggleStatsBtn.addEventListener('click', () => {
+    statsPanel.classList.toggle('open');
+    toggleStatsBtn.textContent = statsPanel.classList.contains('open') ? '✖ Fermer' : '�
+ Voir par zone';
+  });
+
+  fetchStats();
+  setInterval(fetchStats, 60000);
+
+})();
+</script>
+
+</body>
+</html>

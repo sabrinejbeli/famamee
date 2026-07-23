@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Fama Mee — L'eau, zone par zone</title>
+<title>Fama Mee â L'eau, zone par zone</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap');
@@ -170,7 +170,7 @@
   #zone-votes .v-famma{color:var(--green-dark);}
   #zone-votes .v-mafamech{color:var(--red-dark);}
 
-  /* Panneau statistiques détaillé */
+  /* Panneau statistiques dÃ©taillÃ© */
   #stats-panel{
     background:var(--white);padding:14px 20px;
     border-bottom:1px solid var(--sand-2);
@@ -190,7 +190,7 @@
     display:flex;flex-direction:column;gap:4px;
   }
   .zone-card-name{font-weight:700;font-size:13px;color:var(--ink);}
-  .zone-bar{display:flex;height:6px;border-radius:3�x;overflow:hidden;gap:1px;margin:2px 0;}
+  .zone-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;gap:1px;margin:2px 0;}
   .zone-bar .b-f{background:var(--green);}
   .zone-bar .b-m{background:var(--red);}
   .zone-card-counts{font-size:11px;color:#5a6b74;}
@@ -258,30 +258,30 @@
       <div>
         <h1>Fama<span> Mee</span></h1>
         <div class="tagline">Y a-t-il de l'eau dans ta zone aujourd'hui ?</div>
-        <div class="slogan-badge">نحبو الماء — Nhebou el Mee</div>
+        <div class="slogan-badge">ÙØ­Ø¨Ù Ø§ÙÙØ§Ø¡ â Nhebou el Mee</div>
       </div>
     </div>
     <div class="search-wrap" id="search-form" role="search">
       <input type="text" id="search-input" placeholder="Chercher une ville, un quartier..." autocomplete="off" enterkeyhint="search" />
-      <button type="button" id="search-btn">🔍 Chercher</button>
+      <button type="button" id="search-btn">ð Chercher</button>
     </div>
   </div>
   <div class="hint">Clique sur ta zone sur la carte, puis signale : <strong>Famma</strong> (il y a de l'eau) ou <strong>Mafamech</strong> (pas d'eau). <em>Un seul vote par zone.</em></div>
 </header>
 
 <div id="stats">
-  <div class="stat"><span class="dot green"></span><span id="count-famma">…</span> ont dit Famma</div>
-  <div class="stat"><span class="dot red"></span><span id="count-mafamech">…</span> ont dit Mafamech</div>
+  <div class="stat"><span class="dot green"></span><span id="count-famma">â¦</span> ont dit Famma</div>
+  <div class="stat"><span class="dot red"></span><span id="count-mafamech">â¦</span> ont dit Mafamech</div>
   <div class="stat" id="stat-zones" style="color:#7c8a91;font-size:12px;"></div>
-  <button id="toggle-stats" type="button">📊 Voir par zone</button>
+  <button id="toggle-stats" type="button">ð Voir par zone</button>
 </div>
 </div>
 
 <!-- Panneau top zones -->
 <div id="stats-panel">
-  <div class="stats-title">📊 Signalements par zone</div>
+  <div class="stats-title">ð Signalements par zone</div>
   <div class="top-zones-grid" id="top-zones-grid">
-    <div style="color:#7c8a91;font-size:13px;">Chargement des données…</div>
+    <div style="color:#7c8a91;font-size:13px;">Chargement des donnÃ©esâ¦</div>
   </div>
 </div>
 
@@ -290,19 +290,19 @@
 
   <div id="zone-panel">
     <div class="zone-name-row">
-      <span class="zone-label">Zone sélectionnée</span>
+      <span class="zone-label">Zone sÃ©lectionnÃ©e</span>
     </div>
-    <div id="zone-name">—</div>
+    <div id="zone-name">â</div>
     <div id="zone-votes"></div>
     <div class="status-btns">
-      <button class="status-btn famma" id="btn-famma" type="button">💧 Famma</button>
-      <button class="status-btn mafamech" id="btn-mafamech" type="button">🚱 Mafamech</button>
+      <button class="status-btn famma" id="btn-famma" type="button">ð§ Famma</button>
+      <button class="status-btn mafamech" id="btn-mafamech" type="button">ð± Mafamech</button>
     </div>
     <div id="confirm-msg"></div>
   </div>
 </main>
 
-<footer>Signalements partagés et enregistrés pour tous les visiteurs du site — données communautaires non officielles.</footer>
+<footer>Signalements partagÃ©s et enregistrÃ©s pour tous les visiteurs du site â donnÃ©es communautaires non officielles.</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -310,9 +310,8 @@
   // =============================================
   // Configuration
   // =============================================
-  // En production, remplacez par l'URL de votre hébergeur PHP
-  // ex: const API_BASE = 'https://votre-site.infinityfreeapp.com/api';
-  const API_BASE = './api';
+  // API Netlify Functions
+  const API_BASE = '/.netlify/functions';
 
   // =============================================
   // Initialisation carte
@@ -335,11 +334,13 @@
   const topZonesGrid    = document.getElementById('top-zones-grid');
 
   let currentMarker   = null;
-  let currentZone     = null;
+  let currentZone     = null;   // { name, lat, lng }
   let globalCounts    = { famma: 0, mafamech: 0 };
-  let zoneVotesCache  = {};
+  let zoneVotesCache  = {};     // { "nom": { famma:n, mafamech:n } }
   let topZonesCache   = [];
 
+  // localStorage: zones dÃ©jÃ  votÃ©es par cet utilisateur
+  // Structure: { "zoneName": "famma"|"mafamech" }
   function getVotedZones() {
     try { return JSON.parse(localStorage.getItem('fm-voted-zones') || '{}'); }
     catch(e) { return {}; }
@@ -355,9 +356,12 @@
     return getVotedZones()[name] || null;
   }
 
+  // =============================================
+  // API calls
+  // =============================================
   async function fetchStats() {
     try {
-      const res  = await fetch(`${API_BASE}/stats.php?top=50&_=${Date.now()}`);
+      const res  = await fetch(`${API_BASE}/stats?top=50&_=${Date.now()}`);
       const data = await res.json();
       if (data.global) {
         globalCounts  = data.global;
@@ -367,8 +371,9 @@
         renderTopZones();
       }
     } catch(e) {
-      countFammaEl.textContent = '—';
-      countMafamechEl.textContent = '—';
+      // Mode hors-ligne : ne rien afficher d'errorÃ©
+      countFammaEl.textContent = 'â';
+      countMafamechEl.textContent = 'â';
     }
   }
 
@@ -376,21 +381,25 @@
     btnFamma.disabled = true;
     btnMafamech.disabled = true;
     confirmMsg.className = '';
-    confirmMsg.textContent = 'Envoi en cours…';
+    confirmMsg.textContent = 'Envoi en coursâ¦';
+
     try {
-      const res  = await fetch(`${API_BASE}/vote.php`, {
+      const res  = await fetch(`${API_BASE}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ zone_name, vote_type, latitude: lat, longitude: lng })
       });
       const data = await res.json();
+
       if (data.already_voted) {
         confirmMsg.className = 'warning';
-        confirmMsg.textContent = data.message || 'Vous avez déjà voté pour cette zone.';
+        confirmMsg.textContent = data.message || 'Vous avez dÃ©jÃ  votÃ© pour cette zone.';
+        // Mettre Ã  jour localStorage pour qu'on s'en souvienne
         saveVotedZone(zone_name, data.previous_vote || vote_type);
         applyVotedState(zone_name, data.previous_vote || vote_type);
         return;
       }
+
       if (data.success) {
         saveVotedZone(zone_name, vote_type);
         globalCounts  = data.global_counts || globalCounts;
@@ -400,29 +409,37 @@
         applyVotedState(zone_name, vote_type);
         confirmMsg.className = 'success';
         confirmMsg.textContent = data.message;
+        // RafraÃ®chir le top zones
         await fetchStats();
-      } else { throw new Error(data.error || 'Erreur inconnue'); }
+      } else {
+        throw new Error(data.error || 'Erreur inconnue');
+      }
+
     } catch(e) {
+      // Fallback local si l'API n'est pas encore configurÃ©e
       saveVotedZone(zone_name, vote_type);
       applyVotedState(zone_name, vote_type);
       confirmMsg.className = 'warning';
-      confirmMsg.textContent = 'Vote enregistré localement (API indisponible).';
+      confirmMsg.textContent = 'Vote enregistrÃ© localement (API indisponible).';
     }
   }
 
+  // =============================================
+  // Rendu
+  // =============================================
   function renderGlobalCounts() {
     countFammaEl.textContent    = globalCounts.famma    || 0;
     countMafamechEl.textContent = globalCounts.mafamech || 0;
     const z = globalCounts.zones;
-    statZonesEl.textContent = z ? `${z} zone${z>1?'s':''} signalée${z>1?'s':''}` : '';
+    statZonesEl.textContent = z ? `${z} zone${z>1?'s':''} signalÃ©e${z>1?'s':''}` : '';
   }
 
   function renderZoneVotes(name) {
     const v = zoneVotesCache[name] || { famma: 0, mafamech: 0 };
     if (v.famma === 0 && v.mafamech === 0) { zoneVotesEl.textContent = ''; return; }
     zoneVotesEl.innerHTML =
-      `<span class="v-famma">💧 ${v.famma} Famma</span>` +
-      `<span class="v-mafamech">🚱 ${v.mafamech} Mafamech</span>`;
+      `<span class="v-famma">ð§ ${v.famma} Famma</span>` +
+      `<span class="v-mafamech">ð± ${v.mafamech} Mafamech</span>`;
   }
 
   function renderTopZones() {
@@ -436,26 +453,46 @@
       const pm = 100 - pf;
       return `<div class="zone-card">
         <div class="zone-card-name">${escapeHtml(z.name)}</div>
-        <div class="zone-bar"><div class="b-f" style="width:${pf}%"></div><div class="b-m" style="width:${pm}%"></div></div>
-        <div class="zone-card-counts"><span class="cf">💧 ${z.famma}</span>&nbsp;<span class="cm">🚱 ${z.mafamech}</span></div>
+        <div class="zone-bar">
+          <div class="b-f" style="width:${pf}%"></div>
+          <div class="b-m" style="width:${pm}%"></div>
+        </div>
+        <div class="zone-card-counts">
+          <span class="cf">ð§ ${z.famma}</span> &nbsp;
+          <span class="cm">ð± ${z.mafamech}</span>
+        </div>
       </div>`;
     }).join('');
   }
 
-  function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
   function applyVotedState(name, status) {
     btnFamma.classList.toggle('selected', status === 'famma');
     btnMafamech.classList.toggle('selected', status === 'mafamech');
-    btnFamma.disabled = true; btnMafamech.disabled = true;
+    btnFamma.disabled    = true;
+    btnMafamech.disabled = true;
     if (currentMarker) currentMarker.setIcon(makeIcon(status));
   }
 
+  // =============================================
+  // Marqueur carte
+  // =============================================
   function makeIcon(state) {
-    const emoji = state === 'pending' ? '?' : (state === 'famma' ? '💧' : '🚱');
-    return L.divIcon({ className: '', html: `<div class="fm-marker ${state} ripple"><span>${emoji}</span></div>`, iconSize: [26,26], iconAnchor: [13,26] });
+    const emoji = state === 'pending' ? '?' : (state === 'famma' ? 'ð§' : 'ð±');
+    return L.divIcon({
+      className: '',
+      html: `<div class="fm-marker ${state} ripple"><span>${emoji}</span></div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 26]
+    });
   }
 
+  // =============================================
+  // GÃ©ocodage inverse
+  // =============================================
   async function reverseGeocode(lat, lng) {
     try {
       const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`);
@@ -468,47 +505,72 @@
     return `Zone (${lat.toFixed(3)}, ${lng.toFixed(3)})`;
   }
 
+  // =============================================
+  // Ouverture du panneau zone
+  // =============================================
   function openPanelForZone(name, lat, lng) {
     currentZone = { name, lat, lng };
     zoneNameEl.textContent = name;
-    confirmMsg.className = ''; confirmMsg.textContent = '';
+    confirmMsg.className = '';
+    confirmMsg.textContent = '';
     renderZoneVotes(name);
+
+    // VÃ©rification locale : dÃ©jÃ  votÃ© ?
     const prev = hasVotedFor(name);
     if (prev) {
       applyVotedState(name, prev);
       confirmMsg.className = 'warning';
-      confirmMsg.textContent = `Vous avez déjà voté "${prev === 'famma' ? 'Famma 💧' : 'Mafamech 🚱'}" pour cette zone.`;
+      confirmMsg.textContent = `Vous avez dÃ©jÃ  votÃ© "${prev === 'famma' ? 'Famma ð§' : 'Mafamech ð±'}" pour cette zone.`;
     } else {
-      btnFamma.classList.remove('selected'); btnMafamech.classList.remove('selected');
-      btnFamma.disabled = false; btnMafamech.disabled = false;
+      btnFamma.classList.remove('selected');
+      btnMafamech.classList.remove('selected');
+      btnFamma.disabled    = false;
+      btnMafamech.disabled = false;
     }
     panel.classList.add('visible');
   }
 
+  // =============================================
+  // Clic sur la carte
+  // =============================================
   map.on('click', async function(e) {
     const { lat, lng } = e.latlng;
     if (currentMarker) map.removeLayer(currentMarker);
     currentMarker = L.marker([lat, lng], { icon: makeIcon('pending') }).addTo(map);
-    zoneNameEl.textContent = 'Recherche du nom de la zone…';
-    confirmMsg.className = ''; confirmMsg.textContent = '';
-    btnFamma.classList.remove('selected'); btnMafamech.classList.remove('selected');
-    btnFamma.disabled = false; btnMafamech.disabled = false;
-    zoneVotesEl.textContent = ''; panel.classList.add('visible');
+
+    zoneNameEl.textContent = 'Recherche du nom de la zoneâ¦';
+    confirmMsg.className = '';
+    confirmMsg.textContent = '';
+    btnFamma.classList.remove('selected');
+    btnMafamech.classList.remove('selected');
+    btnFamma.disabled = false;
+    btnMafamech.disabled = false;
+    zoneVotesEl.textContent = '';
+    panel.classList.add('visible');
+
     const name = await reverseGeocode(lat, lng);
     openPanelForZone(name, lat, lng);
   });
 
+  // =============================================
+  // Boutons vote
+  // =============================================
   btnFamma.addEventListener('click', async () => {
     if (!currentZone || btnFamma.disabled) return;
     await submitVote(currentZone.name, 'famma', currentZone.lat, currentZone.lng);
   });
+
   btnMafamech.addEventListener('click', async () => {
     if (!currentZone || btnMafamech.disabled) return;
     await submitVote(currentZone.name, 'mafamech', currentZone.lat, currentZone.lng);
   });
 
+  // =============================================
+  // Recherche
+  // =============================================
   const searchBtn = document.getElementById('search-btn');
   const input     = document.getElementById('search-input');
+
   async function runSearch() {
     const q = input.value.trim();
     if (!q) return;
@@ -525,26 +587,36 @@
         openPanelForZone(place.display_name.split(',')[0], lat, lng);
       } else {
         zoneNameEl.textContent = 'Zone introuvable';
-        confirmMsg.textContent = ''; panel.classList.add('visible');
+        confirmMsg.textContent = '';
+        panel.classList.add('visible');
       }
     } catch(err) {
-      zoneNameEl.textContent = 'Erreur de recherche.'; panel.classList.add('visible');
+      zoneNameEl.textContent = 'Erreur de recherche.';
+      panel.classList.add('visible');
     }
   }
+
   searchBtn.addEventListener('click', runSearch);
   input.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); input.blur(); runSearch(); }
   });
 
+  // =============================================
+  // Toggle panneau statistiques
+  // =============================================
   const toggleStatsBtn = document.getElementById('toggle-stats');
   const statsPanel     = document.getElementById('stats-panel');
   toggleStatsBtn.addEventListener('click', () => {
     statsPanel.classList.toggle('open');
-    toggleStatsBtn.textContent = statsPanel.classList.contains('open') ? '✖ Fermer' : '�
- Voir par zone';
+    toggleStatsBtn.textContent = statsPanel.classList.contains('open')
+      ? 'â Fermer' : 'ð Voir par zone';
   });
 
+  // =============================================
+  // Initialisation
+  // =============================================
   fetchStats();
+  // RafraÃ®chir les stats toutes les 60 secondes
   setInterval(fetchStats, 60000);
 
 })();
